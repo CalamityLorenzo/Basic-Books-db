@@ -11,13 +11,12 @@ namespace Basic.BooksDb.Repositories
     public class BooksRepository
     {
         private readonly BooksDbContext _ctx;
-        private readonly string _userName;
 
-        public BooksRepository(BooksDbContext ctx, string userName)
+        public BooksRepository(BooksDbContext ctx)
         {
             this._ctx = ctx;
-            this._userName = userName;
         }
+
         /// <summary>
         /// You can also add reviews at the same time.
         /// </summary>
@@ -31,19 +30,20 @@ namespace Basic.BooksDb.Repositories
 
         public Book GetBook(Guid id)
         {
-            return _ctx.Books.AsTracking(QueryTrackingBehavior.NoTracking). First(p => p.Id == id).ToClient();
+            return _ctx.Books.AsTracking(QueryTrackingBehavior.NoTracking).First(p => p.Id == id).ToClient();
         }
 
         public Review AddBookReview(Guid Id, Review review)
         {
-            var newReview  = review.ToDb();
+            var newReview = review.ToDb();
             newReview.BookId = Id;
-           var reviewTracking =  this._ctx.Reviews.Add(newReview);
+            var reviewTracking = this._ctx.Reviews.Add(newReview);
             _ctx.SaveChanges();
 
             return reviewTracking.Entity.ToClient();
 
         }
+
         /// <summary>
         /// Updating a book, means updating the reviews too.
         /// So if the review is MISSING in the client version
@@ -79,7 +79,7 @@ namespace Basic.BooksDb.Repositories
             _ctx.SaveChanges();
         }
 
-        public void DropReview (Review review)
+        public void DropReview(Review review)
         {
             this.DropReview(review.Id);
         }
