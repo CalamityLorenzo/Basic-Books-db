@@ -18,8 +18,8 @@ namespace Basic.BooksDb.Repositories
         {
             this._ctx = ctx;
 
-            this.reviewsAuditManager = new EntityAuditManager<ReviewDb, Guid>(userName, r => r.Id.Equals(Guid.Empty), p => ctx.Reviews.Find(p.Id) );
-            this.booksAuditManager = new EntityAuditManager<BookDb, Guid>(userName, r => r.Id.Equals(Guid.Empty), p => ctx.Books.Find(p.Id));
+            this.reviewsAuditManager = new EntityAuditManager<ReviewDb, Guid>(userName, r => r.Id.Equals(Guid.Empty), p => ctx.Reviews.AsNoTracking().FirstOrDefault(a=>a.Id==p.Id) );
+            this.booksAuditManager = new EntityAuditManager<BookDb, Guid>(userName, r => r.Id.Equals(Guid.Empty), p => ctx.Books.AsNoTracking().FirstOrDefault(a=>a.Id==p.Id));
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Basic.BooksDb.Repositories
 
         public Book GetBook(Guid id)
         {
-            return _ctx.Books.AsTracking(QueryTrackingBehavior.NoTracking).First(p => p.Id == id).ToClient();
+            return _ctx.Books.AsNoTracking().First(p => p.Id == id).ToClient();
         }
 
         public Review AddBookReview(Guid Id, Review review)
@@ -68,9 +68,12 @@ namespace Basic.BooksDb.Repositories
             dbBook.Reviews = dbBook.Reviews.Select(o => { o.BookId = book.Id; return o; }).ToList();
             booksAuditManager.SetAuditInfo(dbBook);
             // Fetch all the original reviews as wel.
+            var allReviews = _ctx.Reviews.Where(r => r.BookId == dbBook.Id).ToList();
+
+            var removedReviews = allReviews.Where(a => !dbBook.Reviews.Any(db=> db.Id != a.Id)).ToList();
 
             reviewsAuditManager.SetAuditInfo(dbBook.Reviews.ToList(), _ctx.Reviews.Where(r=>r.BookId==dbBook.Id));
-
+            _ctx.Reviews.RemoveRange(removedReviews);
             _ctx.Books.Update(dbBook);
             _ctx.SaveChanges();
         }
