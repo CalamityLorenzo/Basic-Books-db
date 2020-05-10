@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Basic.BooksDb.Entities;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace BooksDb.Entities
 {
-    public class ReviewDb
+    public class ReviewDb : AuditBaseDb
     {
         public Guid Id { get; set; }
         public Guid BookId { get; set; }

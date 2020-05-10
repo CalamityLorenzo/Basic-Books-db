@@ -1,11 +1,12 @@
-﻿using BooksDb.Models;
+﻿using Basic.BooksDb.Entities;
+using BooksDb.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace BooksDb.Entities
 {
-    public class BookDb
+    public class BookDb : AuditBaseDb
     {
         public BookDb()
         {
