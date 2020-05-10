@@ -22,5 +22,7 @@ namespace Basic.BooksDb.Console
                 ctx.Database.Migrate();
             }
         }
+
+        
     }
 }

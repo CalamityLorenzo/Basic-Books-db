@@ -1,1 +1,1 @@
-﻿Data Source=.\;Initial Catalog=BasicBooks;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False
+﻿Data Source=.\;Initial Catalog=BasicBooksV2;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False

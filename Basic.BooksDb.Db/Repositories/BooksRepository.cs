@@ -11,10 +11,15 @@ namespace Basic.BooksDb.Repositories
     public class BooksRepository
     {
         private readonly BooksDbContext _ctx;
+        private readonly EntityAuditManager<ReviewDb, Guid> reviewsAuditManager;
+        private readonly EntityAuditManager<BookDb, Guid> booksAuditManager;
 
-        public BooksRepository(BooksDbContext ctx)
+        public BooksRepository(BooksDbContext ctx, string userName)
         {
             this._ctx = ctx;
+
+            this.reviewsAuditManager = new EntityAuditManager<ReviewDb, Guid>(userName, r => r.Id.Equals(Guid.Empty), p => ctx.Reviews.Find(p.Id) );
+            this.booksAuditManager = new EntityAuditManager<BookDb, Guid>(userName, r => r.Id.Equals(Guid.Empty), p => ctx.Books.Find(p.Id));
         }
 
         /// <summary>
@@ -23,7 +28,11 @@ namespace Basic.BooksDb.Repositories
         /// <param name="newBook"></param>
         public Book AddBook(Book newBook)
         {
-            var saved = this._ctx.Add(newBook.ToDb());
+            var newBookDb = newBook.ToDb();
+            booksAuditManager.SetAuditInfo(newBookDb);
+            reviewsAuditManager.SetAuditInfo(newBookDb.Reviews.ToList());
+            
+            var saved = this._ctx.Add(newBookDb);
             _ctx.SaveChanges();
             return saved.Entity.ToClient();
         }
@@ -37,6 +46,7 @@ namespace Basic.BooksDb.Repositories
         {
             var newReview = review.ToDb();
             newReview.BookId = Id;
+            reviewsAuditManager.SetAuditInfo(newReview);
             var reviewTracking = this._ctx.Reviews.Add(newReview);
             _ctx.SaveChanges();
 
@@ -56,6 +66,11 @@ namespace Basic.BooksDb.Repositories
             // update all the reviews to have at least the correct bookId
             // not doing this means NEW reviews are skipped.
             dbBook.Reviews = dbBook.Reviews.Select(o => { o.BookId = book.Id; return o; }).ToList();
+            booksAuditManager.SetAuditInfo(dbBook);
+            // Fetch all the original reviews as wel.
+
+            reviewsAuditManager.SetAuditInfo(dbBook.Reviews.ToList(), _ctx.Reviews.Where(r=>r.BookId==dbBook.Id));
+
             _ctx.Books.Update(dbBook);
             _ctx.SaveChanges();
         }
