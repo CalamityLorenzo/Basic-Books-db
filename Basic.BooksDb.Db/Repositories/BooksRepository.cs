@@ -30,8 +30,8 @@ namespace Basic.BooksDb.Repositories
         {
             var newBookDb = newBook.ToDb();
             booksAuditManager.SetAuditInfo(newBookDb);
+
             reviewsAuditManager.SetAuditInfo(newBookDb.Reviews.ToList());
-            
             var saved = this._ctx.Add(newBookDb);
             _ctx.SaveChanges();
             return saved.Entity.ToClient();
@@ -66,12 +66,11 @@ namespace Basic.BooksDb.Repositories
             // update all the reviews to have at least the correct bookId
             // not doing this means NEW reviews are skipped.
             dbBook.Reviews = dbBook.Reviews.Select(o => { o.BookId = book.Id; return o; }).ToList();
-            booksAuditManager.SetAuditInfo(dbBook);
-            // Fetch all the original reviews as wel.
+            // Fetch all the original reviews and find out if any are missing.
             var allReviews = _ctx.Reviews.Where(r => r.BookId == dbBook.Id).ToList();
-
             var removedReviews = allReviews.Where(a => !dbBook.Reviews.Any(db=> db.Id != a.Id)).ToList();
 
+            booksAuditManager.SetAuditInfo(dbBook);
             reviewsAuditManager.SetAuditInfo(dbBook.Reviews.ToList(), _ctx.Reviews.Where(r=>r.BookId==dbBook.Id));
             _ctx.Reviews.RemoveRange(removedReviews);
             _ctx.Books.Update(dbBook);

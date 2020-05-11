@@ -8,6 +8,14 @@ using System.Text;
 
 namespace Basic.BooksDb.Repositories
 {
+    /// <summary>
+    /// This just manages current, and existing audit settings.
+    /// The use of isNewRecord, and OriginalItem, are convienice.
+    /// Moving them out of the repoistory makes it less 'cluttereed' everytime you want to save.
+    /// The key here is convience for the implementer.
+    /// </summary>
+    /// <typeparam name="BaseDbEntity"></typeparam>
+    /// <typeparam name="T"></typeparam>
     internal class EntityAuditManager<BaseDbEntity, T> where BaseDbEntity : AuditBaseDb, IEntityDbId<T>, new()
     {
         private readonly Func<BaseDbEntity, bool> isNewRecord;
@@ -20,9 +28,10 @@ namespace Basic.BooksDb.Repositories
             this.originalItemAudit = originalItemAudit;
             this.userName = userName;
         }
-   
+
         public void SetAuditInfo(BaseDbEntity newRecord)
         {
+            // Existing record, fetch the original
             if (!isNewRecord(newRecord))
             {
                 var original = originalItemAudit(newRecord);
@@ -49,9 +58,9 @@ namespace Basic.BooksDb.Repositories
         public void SetAuditInfo(List<BaseDbEntity> updated, IEnumerable<BaseDbEntity> original)
         {
             var allOriginal = original.ToList();
-            foreach(var update in updated)
+            foreach (var update in updated)
             {
-                if(!isNewRecord(update))
+                if (!isNewRecord(update))
                 {
                     var origin = allOriginal.First(f => f.Id.Equals(update.Id));
                     SetAuditInfo(updated, original);
@@ -67,10 +76,15 @@ namespace Basic.BooksDb.Repositories
 
         public void SetAuditInfo(List<BaseDbEntity> newItems)
         {
+            // If there are non-new items it WILL crash.
             SetAuditInfo(newItems, Enumerable.Empty<BaseDbEntity>());
         }
 
-
+        /// <summary>
+        /// Copy the db Created audit data into a new record.
+        /// </summary>
+        /// <param name="updated"></param>
+        /// <param name="original"></param>
         protected void MigrateAudit(BaseDbEntity updated, AuditBaseDb original)
         {
             updated.Created = original.Created;
